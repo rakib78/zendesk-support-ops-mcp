@@ -1,26 +1,24 @@
-# Use Node.js LTS image
-FROM node:18-alpine
-
-# Set working directory
+# ---- Build stage ----
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy source code
-COPY . .
+COPY tsconfig.json ./
+COPY src/ ./src/
 
-# Build the project
 RUN npm run build
 
-# Expose port (adjust if your app uses a different port)
-EXPOSE 3000
+# ---- Runtime stage ----
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Set environment variables (these can be overridden at runtime)
 ENV NODE_ENV=production
 
-# Start the application
-CMD ["npm", "start"]
+COPY package*.json ./
+RUN npm install --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
+CMD ["node", "dist/index.js"]
