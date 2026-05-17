@@ -33,7 +33,7 @@ interface TicketChanges {
   status?: "open" | "pending" | "solved" | "closed" | "on-hold";
   assignee_id?: number;
   group_id?: number;
-  custom_fields?: Array<{ id: number; value: unknown }>;
+  custom_fields?: Array<{ id: number; value?: unknown }>;
   subject?: string;
 }
 
