@@ -387,8 +387,8 @@ main().catch((error) => {
  * Minimal Zod-to-JSON-Schema converter for MCP tool registration.
  * Handles the common cases: object, string, number, boolean, enum, array, optional.
  */
-function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
-  return zodTypeToSchema(schema) as Record<string, unknown>;
+function zodToJsonSchema(schema: z.ZodTypeAny): { type: "object"; properties?: Record<string, object>; required?: string[] } {
+  return zodTypeToSchema(schema) as { type: "object"; properties?: Record<string, object>; required?: string[] };
 }
 
 function zodTypeToSchema(schema: z.ZodTypeAny): unknown {
