@@ -1,67 +1,41 @@
-# zendesk-support-ops-mcp
+# Zendesk Support Ops MCP
 
-> Production-safe Zendesk Support MCP with dry-run writes, SLA breach radar, natural-language macro authoring, and plain-language weekly ops summaries.
+> Production-safe Zendesk MCP for Claude, Cursor, and any MCP-compatible AI assistant.
+> Dry-run ticket writes · SLA breach radar · NL macro authoring · Weekly manager digest.
 
-[![MCP Server](https://img.shields.io/badge/MCP-Server-blue)](https://mcpize.com/mcp/zendesk-support-ops-mcp)
-[![Zendesk](https://img.shields.io/badge/Zendesk-API-green)](https://developer.zendesk.com)
+[![MCPize](https://img.shields.io/badge/MCPize-Marketplace-blue)](https://mcpize.com/mcp/zendesk-support-ops-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Why this exists
+---
 
-Zendesk powers 100,000+ brands. Teams connecting Claude (or any AI assistant) to Zendesk need four things existing MCP servers don't properly handle:
+## Why this server exists
 
-1. **Write-access with safety** — every write operation has a `dry_run` preview + explicit `confirm` gate
-2. **SLA intelligence** — breach radar and per-ticket SLA explanation, not just ticket search
-3. **Macro authoring at scale** — natural-language spec → validated `actions[]` → preview → apply
-4. **Manager reporting** — plain-language weekly digest without learning Zendesk Explore
+Zendesk powers 100,000+ support teams. Every existing MCP server for Zendesk falls into the same pattern: ticket search plus basic reads, with write access bolted on as an afterthought. None of them treat **safety**, **SLA intelligence**, or **macro authoring** as first-class product features.
 
-## Tools (MVP v1.0)
+This server is built for teams where an AI making an unreviewed edit to a live ticket is a real problem — not a theoretical one.
 
-| Tool | Description |
-|------|-------------|
-| `zendesk_whoami` | Verify connection, auth, and user role |
-| `search_tickets` | Full Zendesk search syntax with pagination |
-| `get_ticket` | Full ticket context + SLA metrics |
-| `preview_ticket_update` | **Dry-run** diff of proposed changes |
-| `execute_ticket_update` | Apply changes (requires `confirm: true`) |
-| `add_internal_note` | Add private comment (dry-run by default) |
-| `list_sla_breaches` | Ranked list of tickets at breach risk |
-| `explain_ticket_sla` | Plain-language SLA story for one ticket |
-| `weekly_support_summary` | Manager-ready weekly ops digest |
-| `create_macro_from_spec` | NL or JSON spec → macro (dry-run default) |
-| `list_macros` | Browse macro library |
-| `get_macro` | Fetch macro definition |
+**Four things it solves that others don't:**
 
-## Usage Scenarios
+| Gap | What this server does |
+|-----|-----------------------|
+| Write access without guardrails | Every write defaults to dry-run. Execution requires `confirm: true`. |
+| Manual SLA hunting | `list_sla_breaches` surfaces at-risk tickets ranked by wait time |
+| Macro authoring via UI clicking | Natural language or JSON → validated `actions[]` → preview → create |
+| Explore reports only | `weekly_support_summary` gives a paste-ready Monday digest in one call |
 
-**Morning SLA sweep**
-```
-list_sla_breaches → prioritize_ticket_queue → agents work top-down
-```
+---
 
-**Safe bulk update**
-```
-preview_ticket_update on tickets → review diff → execute_ticket_update confirm:true
-```
-
-**Macro from spec**
-```
-create_macro_from_spec dry_run:true → review → dry_run:false → list_macros to verify
-```
-
-**Monday leadership email**
-```
-weekly_support_summary week_start:2025-01-06 → paste into Notion or email
-```
-
-## Setup
+## Quick Start
 
 ### 1. Get a Zendesk API token
 
-In Zendesk: **Admin → Apps & Integrations → APIs → Zendesk API → Add API token**
+In Zendesk: **Admin Center → Apps and Integrations → APIs → Zendesk API → Add API token**
 
-### 2. Configure Claude Desktop
+Keep your subdomain handy — it's the part before `.zendesk.com`.
 
-Add to `claude_desktop_config.json`:
+### 2. Add to Claude Desktop
+
+Open `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) and add:
 
 ```json
 {
@@ -79,52 +53,150 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
-### 3. Or install globally
+Restart Claude Desktop. Run `zendesk_whoami` to confirm the connection.
 
-```bash
-npm install -g zendesk-support-ops-mcp
+### 3. Or use via MCPize
+
+Subscribe at [mcpize.com/mcp/zendesk-support-ops-mcp](https://mcpize.com/mcp/zendesk-support-ops-mcp) — enter your credentials once, get an MCP endpoint you can use in any compatible client.
+
+---
+
+## Tools
+
+### Connection
+
+| Tool | What it does |
+|------|-------------|
+| `zendesk_whoami` | Verify subdomain, auth, and user role. Run this first. |
+
+### Tickets
+
+| Tool | What it does |
+|------|-------------|
+| `search_tickets` | Full Zendesk search syntax with pagination cursor support |
+| `get_ticket` | Full ticket context: fields, tags, SLA metrics, channel, assignee |
+| `preview_ticket_update` | **Dry-run** — shows exact diff for tag/priority/status/assignee changes, no execution |
+| `execute_ticket_update` | Apply changes (requires `confirm: true`) |
+| `add_internal_note` | Add private comment — dry-run previews by default |
+
+### SLA
+
+| Tool | What it does |
+|------|-------------|
+| `list_sla_breaches` | Open tickets ranked by breach risk (oldest-wait-first) |
+| `explain_ticket_sla` | Plain-language SLA story: FRT, resolution time, wait, risk verdict |
+
+### Macros
+
+| Tool | What it does |
+|------|-------------|
+| `create_macro_from_spec` | NL or JSON spec → validated `actions[]` → optional create. **Dry-run default: true** |
+| `list_macros` | Browse macro library, filter by active/title |
+| `get_macro` | Fetch full macro definition for review or editing |
+
+### Reporting
+
+| Tool | What it does |
+|------|-------------|
+| `weekly_support_summary` | Monday digest: volume, resolution rate, priority breakdown, top tags, SLA health, CSAT |
+
+---
+
+## Example Conversations
+
+**Morning triage:**
+```
+"Show me all SLA breaches from the last 3 days for group 12345"
+→ list_sla_breaches since:2025-01-13 group_id:12345
+
+"Explain the SLA situation on ticket 98765"
+→ explain_ticket_sla ticket_id:98765
 ```
 
-Then use env vars or a `.env` file.
+**Safe ticket update:**
+```
+"Preview adding tag 'escalated' and changing priority to urgent on ticket 11111"
+→ preview_ticket_update ticket_id:11111 changes:{tags_add:["escalated"], priority:"urgent"}
+
+"Looks good, apply it"
+→ execute_ticket_update ticket_id:11111 changes:{...} confirm:true
+```
+
+**Macro from spec:**
+```
+"Create a macro called 'Billing Hold': set status pending, add tag billing-query,
+ add public comment 'We are reviewing your billing question and will respond within 24 hours.'"
+→ create_macro_from_spec title:"Billing Hold" spec:"..." dry_run:true
+→ [review the actions[]]
+→ create_macro_from_spec ... dry_run:false
+```
+
+**Weekly report:**
+```
+"Generate the weekly support summary for the week starting 2025-01-13"
+→ weekly_support_summary week_start:2025-01-13
+```
+
+---
 
 ## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ZENDESK_SUBDOMAIN` | ✅ | Your subdomain (e.g. `mycompany` for `mycompany.zendesk.com`) |
-| `ZENDESK_EMAIL` | ✅ | Agent/admin email address |
+| `ZENDESK_SUBDOMAIN` | ✅ | Subdomain only — e.g. `acme` for `acme.zendesk.com` |
+| `ZENDESK_EMAIL` | ✅ | Agent or admin email for API token auth |
 | `ZENDESK_API_TOKEN` | ✅ | API token (not your password) |
+
+---
 
 ## Safety Model
 
-- **All write tools default to dry-run** — you see the diff before anything changes
-- **`execute_ticket_update` requires explicit `confirm: true`** — no accidental bulk changes
-- **`add_internal_note` defaults `dry_run: true`** — notes are previewed before posting
-- **`create_macro_from_spec` defaults `dry_run: true`** — macros are validated and previewed
-- Rate limit errors surface with `Retry-After` guidance, not silent failures
+This server treats safety as a product feature, not an afterthought:
+
+- **Default dry-run on all writes** — `preview_ticket_update`, `add_internal_note`, and `create_macro_from_spec` all preview by default
+- **Explicit confirm gate** — `execute_ticket_update` requires `confirm: true` or it blocks
+- **Structured permission errors** — if your token lacks scope for an operation, you get a clear message explaining what's missing, not a silent failure
+- **Rate limit handling** — 429 responses surface with `Retry-After` guidance; the client backs off automatically with exponential retry
+
+---
 
 ## Limitations
 
-- SLA breach detection is heuristic (tickets not updated recently). Precise SLA policy targets require Zendesk Professional+ and are read from ticket SLA fields where available.
-- Search API may lag a few minutes — noted in all relevant tool outputs.
-- CSAT requires Zendesk plan support — tools degrade gracefully if unavailable.
-- Zendesk's Search API returns a practical max of ~1,000 results per query.
+- **SLA breach detection is heuristic** — tickets not updated recently are flagged as at-risk. Precise policy breach times require Zendesk Professional+ with SLA policies configured. `explain_ticket_sla` uses the Ticket Metrics API which is available on all plans.
+- **Search index lag** — Zendesk's Search API can lag a few minutes. All relevant tools note this in their output.
+- **CSAT availability** — depends on your Zendesk plan. `weekly_support_summary` degrades gracefully if satisfaction ratings are unavailable.
+- **Search result cap** — Zendesk Search API has a practical limit of ~1,000 results per query. Use filters to narrow large instances.
 
-## Development
+---
+
+## Local Development
 
 ```bash
-git clone https://github.com/your-repo/zendesk-support-ops-mcp
+git clone https://github.com/rakib78/zendesk-support-ops-mcp
 cd zendesk-support-ops-mcp
 npm install
-npm run build
-npm start
+
+# Set credentials
+export ZENDESK_SUBDOMAIN=your-subdomain
+export ZENDESK_EMAIL=you@yourcompany.com
+export ZENDESK_API_TOKEN=your_token
+
+# Run in dev mode
+npm run dev
+
+# Build for production
+npm run build && npm start
 ```
 
-For development with hot reload:
+Test with [MCP Inspector](https://github.com/modelcontextprotocol/inspector):
 ```bash
-npm run dev
+npx @modelcontextprotocol/inspector node dist/index.js
 ```
+
+---
 
 ## License
 
-MIT — Built by [Md Rakibul Islam](https://github.com/mdrakibul)
+MIT — Built by [Md Rakibul Islam](https://mdrakibulislam.com)
+
+Zendesk Top Admin · Upwork Top Rated Plus · 21,000+ hours · 50+ CRM implementations across HubSpot, Zendesk, Freshdesk, and Salesforce.
