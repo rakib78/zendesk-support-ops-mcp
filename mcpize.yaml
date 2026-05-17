@@ -1,0 +1,43 @@
+version: 1
+name: zendesk-support-ops-mcp
+description: |
+  Production-safe Zendesk Support MCP with dry-run ticket writes, SLA breach radar,
+  natural-language macro authoring, and plain-language weekly ops summaries for
+  support managers, team leads, and senior agents.
+
+runtime: typescript
+entry: src/index.ts
+
+build:
+  install: npm ci
+  command: npm run build
+
+startCommand:
+  type: stdio
+  command: node dist/index.js
+
+bridge:
+  mode: stdio
+
+credentials:
+  - name: ZENDESK_SUBDOMAIN
+    required: true
+    description: "Your Zendesk subdomain (e.g. acme for acme.zendesk.com)"
+    docs_url: https://developer.zendesk.com/api-reference/introduction/
+    mapping:
+      env: ZENDESK_SUBDOMAIN
+
+  - name: ZENDESK_EMAIL
+    required: true
+    description: "Zendesk agent email used for API token authentication"
+    mapping:
+      env: ZENDESK_EMAIL
+
+  - name: ZENDESK_API_TOKEN
+    required: true
+    description: "API token from Zendesk Admin Center (Apps and integrations > Zendesk API)"
+    docs_url: https://support.zendesk.com/hc/en-us/articles/4408889192858
+    mapping:
+      env: ZENDESK_API_TOKEN
+
+credentials_mode: per_user
